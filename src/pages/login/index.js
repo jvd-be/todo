@@ -21,7 +21,11 @@ export default function index () {
         body: JSON.stringify(data)
       })
 
+      console.log(await res.json());
+      
       if (res.ok) {
+        const data =await res.json()
+        console.log(data);
         reset()
         router.push('/')
       }
