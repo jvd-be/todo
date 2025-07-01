@@ -1,0 +1,38 @@
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String   @db.VarChar(255) // رشته با طول متغیر
+  lastName  String   @db.VarChar(255)
+  userName  String   @unique @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Status {
+  Not_Done
+  In_Progress
+  Done
+}
+
+model Todo {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(32)
+  status      Status   @default(Not_Done)
+  description String?  @db.VarChar(200)  // فیلد اختیاری با طول محدود
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

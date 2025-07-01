@@ -1,13 +1,10 @@
-import connectedToDB from '@/utils/DBC'
 import { serialize } from 'cookie'
-
 
 const handler = async (req, res) => {
   switch (req.method) {
     case 'POST': {
-      connectedToDB()
-
       try {
+        // پاک کردن کوکی
         res.setHeader(
           'Set-Cookie',
           serialize('token', '', {
@@ -19,18 +16,15 @@ const handler = async (req, res) => {
           })
         )
 
-        
-        return res
-          .status(201)
-          .json({ message: 'logOut successfully' })
+        return res.status(201).json({ message: 'Logged out successfully' })
       } catch (error) {
-        console.log('error:', error)
-        return res.status(500).json({ message: 'server error' })
+        console.error('Logout error:', error)
+        return res.status(500).json({ message: 'Server error' })
       }
     }
 
     default:
-      return res.status(405).json({ message: 'method not allowed' })
+      return res.status(405).json({ message: 'Method not allowed' })
   }
 }
 

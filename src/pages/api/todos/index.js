@@ -1,51 +1,57 @@
-import Task from '@/models/Todo'
-import connectedToDB from '@/utils/DBC'
+import prisma from '@/utils/prismaClient'
 import VerifyUserToken from '../../../../lib/VerifyUserToken'
 
-const handeler = async (req, res) => {
+const handler = async (req, res) => {
   switch (req.method) {
     case 'POST': {
-      await connectedToDB()
       try {
         const { title, status, description, user } = req.body
 
-        const Todos = await Task.create({ title, status, description, user })
+        if (!title || !status || !user) {
+          return res.status(422).json({ message: 'Missing required fields' })
+        }
 
-        res.status(201).json({ message: 'connect', Todos })
+        // ایجاد تسک جدید
+        const todo = await prisma.todo.create({
+          data: {
+            title,
+            status,
+            description: description || '',
+            user: { connect: { id: user } }  // رفرنس به یوزر
+          }
+        })
+
+        return res.status(201).json({ message: 'Todo created', todo })
       } catch (error) {
         console.error('POST error:', error)
-        return res
-          .status(500)
-          .json({ message: 'Error creating todo', error: error.message })
+        return res.status(500).json({ message: 'Error creating todo', error: error.message })
       }
     }
 
     case 'GET': {
-      await connectedToDB()
-      const userData = VerifyUserToken(req)
-
-      if (!userData) {
-        return res.status(401).json({ message: 'Unauthorized' })
-      }
-
       try {
-        const Todos = await Task.find({ user: userData.id })
+        const userData = VerifyUserToken(req)
 
-        res
-          .status(200)
-          .json({ message: 'todos successfully get', todos: Todos })
+        if (!userData) {
+          return res.status(401).json({ message: 'Unauthorized' })
+        }
+
+        // گرفتن همه تو‌دوهای اون یوزر
+        const todos = await prisma.todo.findMany({
+          where: { userId: userData.id }
+        })
+
+        return res.status(200).json({ message: 'Todos fetched', todos })
       } catch (error) {
         console.error('GET error:', error)
-        return res
-          .status(500)
-          .json({ message: 'Error fetching todos', error: error.message })
+        return res.status(500).json({ message: 'Error fetching todos', error: error.message })
       }
     }
 
-    default: {
-      res.status(424).json({ message: 'methode is not valid!' })
-    }
+    default:
+      res.setHeader('Allow', ['GET', 'POST'])
+      return res.status(405).json({ message:` Method ${req.method} Not Allowed` })
   }
 }
 
-export default handeler
+export default handler

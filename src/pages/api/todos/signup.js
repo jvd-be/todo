@@ -1,46 +1,55 @@
-import connectedToDB from '@/utils/DBC'
-import User from '@/models/User'
+import prisma from '@/utils/prismaClient'
 import jwt from 'jsonwebtoken'
 import { serialize } from 'cookie'
-import bcrypt from "bcrypt"
-const handeler = async (req, res) => {
+import bcrypt from 'bcrypt'
+
+const handler = async (req, res) => {
   switch (req.method) {
     case 'POST': {
-      await connectedToDB()
       try {
         const { firstName, lastName, userName, email, password } = req.body
+
         if (
-          !firstName.trim() ||
-          !lastName.trim() ||
-          !userName.trim() ||
-          !email.trim() ||
-          !password.trim()
+          !firstName?.trim() ||
+          !lastName?.trim() ||
+          !userName?.trim() ||
+          !email?.trim() ||
+          !password?.trim()
         ) {
           return res.status(422).json({ message: 'Data is not valid !!' })
         }
 
-        const exsitUser = await User.findOne({ $or: [{ userName }, { email }] })
+        // چک کردن وجود کاربر
+        const existUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { userName: userName },
+              { email: email }
+            ]
+          }
+        })
 
-        if (exsitUser) {
-          return res.status(422).json({ message: 'user alredy exist' })
+        if (existUser) {
+          return res.status(422).json({ message: 'User already exists' })
         }
 
-        const hashPassword=await bcrypt.hash(password,12)
+        const hashPassword = await bcrypt.hash(password, 12)
 
-        const newUser = await User.create({
-          firstName,
-          lastName,
-          userName,
-          email,
-          password:hashPassword
+        // ایجاد کاربر جدید
+        const newUser = await prisma.user.create({
+          data: {
+            firstName,
+            lastName,
+            userName,
+            email,
+            password: hashPassword
+          }
         })
 
         const token = jwt.sign(
-          { id: newUser._id, userName: newUser.userName },
+          { id: newUser.id, userName: newUser.userName },
           process.env.JWT_SECRET,
-          {
-            expiresIn: '2h'
-          }
+          { expiresIn: '2h' }
         )
 
         res.setHeader(
@@ -54,23 +63,27 @@ const handeler = async (req, res) => {
           })
         )
 
-        return res
-          .status(201)
-          .json({ message: 'create new user successfully', newUser })
+        return res.status(201).json({ message: 'User created successfully', user: newUser })
       } catch (error) {
-        console.log('error:', error)
-        return res.status(500).json({ message: 'server error' })
+        console.error('Error:', error)
+        return res.status(500).json({ message: 'Server error' })
       }
     }
 
     case 'GET': {
-      await connectedToDB()
-      return res.status(200).json({ message: 'get user' })
+      try {
+        const users = await prisma.user.findMany()
+        return res.status(200).json({ users })
+      } catch (error) {
+        console.error('Error:', error)
+        return res.status(500).json({ message: 'Server error' })
+      }
     }
 
     default:
-      break
+      res.setHeader('Allow', ['POST', 'GET'])
+      return res.status(405).end(`Method ${req.method} Not Allowed`)
   }
 }
 
-export default handeler
+export default handler

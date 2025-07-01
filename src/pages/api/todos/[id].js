@@ -1,55 +1,46 @@
-import Task from '@/models/Todo'
-import connectedToDB from '@/utils/DBC'
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
-const handeler = async (req, res) => {
+const handler = async (req, res) => {
+  const { id } = req.query
+
   switch (req.method) {
     case 'PUT': {
-      const { id } = req.query
-
-      await connectedToDB()
       try {
         const { status, title, description } = req.body
 
-        const updatedFields = {}
-
-        if (status) updatedFields.status = status
-        if (title) updatedFields.title = title
-        if (description) updatedFields.description = description
-
-        const updated = await Task.findByIdAndUpdate(id, updatedFields, {
-          new: true
+        const updatedTodo = await prisma.todo.update({
+          where: { id: Number(id) },
+          data: {
+            ...(status && { status }),
+            ...(title && { title }),
+            ...(description && { description })
+          }
         })
 
-        if (!updated) return res.status(404).json({ message: 'Not found' })
-
-        res.status(200).json({ message: 'updated', todo: updated })
+        return res.status(200).json({ message: 'updated', todo: updatedTodo })
       } catch (error) {
-        console.error('error:', error)
+        console.error('PUT error:', error)
+        return res.status(500).json({ message: 'Error updating todo' })
       }
-
-      return
     }
 
     case 'DELETE': {
-      const { id } = req.query
-
-      await connectedToDB()
-
       try {
-        const deleteTodo = await Task.findByIdAndDelete(id)
+        await prisma.todo.delete({
+          where: { id: Number(id) }
+        })
 
-        if (!deleteTodo)
-          return res.status(422).json({ message: 'todo is not found' })
-
-        return res.status(200).json({ message: 'delete todo successfully', id })
+        return res.status(200).json({ message: 'Deleted todo successfully', id })
       } catch (error) {
-        console.error('error:', error)
+        console.error('DELETE error:', error)
+        return res.status(500).json({ message: 'Error deleting todo' })
       }
-      return
     }
 
-    default:return res.status(424).json({ message: 'methode is not valid!' })
+    default:
+      return res.status(405).json({ message: 'Method not allowed' })
   }
 }
 
-export default handeler
+export default handler
