@@ -22,7 +22,6 @@ export default function index () {
       })
       alert("res not ok")
       if (res.ok) {
-         alert("res ok")
         reset()
         router.push('/')
       }
