@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import VerifyUserToken from '@/lib/VerifyUserToken'
+import VerifyUserToken from '../../../../../lib/VerifyUserToken'
 
 const prisma = new PrismaClient()
 
