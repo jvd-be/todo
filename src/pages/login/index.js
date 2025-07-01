@@ -15,7 +15,7 @@ export default function index () {
 
   const onSubmit = async data => {
     try {
-      const res = await fetch('/api/todos/login/', {
+      const res = await fetch('/api/todos/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
