@@ -20,8 +20,9 @@ export default function index () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-
+      alert("res not ok")
       if (res.ok) {
+         alert("res ok")
         reset()
         router.push('/')
       }
