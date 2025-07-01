@@ -25,7 +25,6 @@ export async function getServerSideProps (context) {
 }
 
 export default function index (user) {
-  console.log(user.id);
   
   const [showCart, setShowCart] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
