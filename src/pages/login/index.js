@@ -1,6 +1,6 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
-import Validations from '../Validations/RulesForm'
+import Validations from '../../../Validations/RulesForm'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 
